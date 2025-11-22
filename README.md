@@ -1,40 +1,215 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
+# TinyLink – URL Shortener | Next.js + Neon Postgres
 
-## Getting Started
+TinyLink is a lightweight and elegant URL-shortening web application (similar to Bit.ly) built using **Next.js (Pages Router)**, **Neon Postgres**, and **Tailwind CSS**.
 
-First, run the development server:
+It supports:
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+✔ Short link creation  
+✔ Custom short codes  
+✔ Redirect tracking  
+✔ Click analytics  
+✔ Last-clicked timestamps  
+✔ Delete links  
+✔ Dashboard & Stats Page  
+✔ Healthcheck endpoint (for autograder)
+
+This project is fully deployed on **Vercel**.
+
+---
+
+# 🚀 Live Demo
+🔗 **Production URL:**  
+https://<your-vercel-project>.vercel.app
+
+📂 **GitHub Repository:**  
+https://github.com/harshithhmk2/tinylink
+
+---
+
+# 🛠️ Tech Stack
+
+| Area | Technology |
+|------|-------------|
+| Frontend | Next.js 16 (Pages Router) |
+| Styling | Tailwind CSS |
+| Backend | Next.js API Routes |
+| Database | Neon Postgres |
+| Hosting | Vercel |
+| Language | JavaScript (Node.js) |
+
+---
+
+# 📦 Features
+
+### 🔗 Create Short Links
+- Enter a long URL  
+- Optionally enter a custom short code  
+- Validates URL format  
+- Validates code with pattern: **[A-Za-z0-9]{6,8}**  
+- Shows success/error messages  
+
+### 🚀 Redirect
+- Access `/shortcode` → HTTP 302 redirect  
+- Automatically increments click count  
+- Updates `last_clicked` timestamp  
+
+### 📊 Dashboard
+Displays all links with:
+- Short code  
+- Target URL  
+- Total clicks  
+- Last clicked time  
+- Copy short URL  
+- Delete button  
+- Search/filter by code or URL  
+- Responsive layout  
+- Truncated long URLs (ellipsis)  
+
+### 📈 Stats Page (`/code/:code`)
+Shows detailed analytics:
+- Original URL  
+- Click count  
+- Last clicked  
+- Created time  
+
+### ❤️ Healthcheck (`/healthz`)
+Returns:
+```json
+{
+  "ok": true,
+  "version": "1.0"
+}
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `pages/index.js`. The page auto-updates as you edit the file.
+# 📁 Project Structure
 
-[API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.js`.
+```
+tinylink/
+ ├── pages/
+ │    ├── index.js              → Dashboard
+ │    ├── [code].js             → Redirect handler
+ │    ├── code/
+ │    │     └── [code].js       → Stats page
+ │    └── api/
+ │          ├── healthz.js      → Healthcheck
+ │          └── links/
+ │                ├── index.js  → List + Create links
+ │                └── [code].js → Get + Delete link
+ ├── lib/
+ │    └── db.js                 → Postgres database pool
+ ├── styles/
+ │    └── globals.css
+ ├── public/
+ ├── tailwind.config.js
+ ├── postcss.config.js
+ ├── next.config.js
+ ├── package.json
+ └── README.md
+```
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) instead of React pages.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/pages/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# 🗄️ Database Schema
 
-## Learn More
+Create this table in Neon Postgres:
 
-To learn more about Next.js, take a look at the following resources:
+```sql
+CREATE TABLE IF NOT EXISTS links (
+  code VARCHAR(8) PRIMARY KEY,
+  url TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  clicks BIGINT NOT NULL DEFAULT 0,
+  last_clicked TIMESTAMPTZ
+);
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn-pages-router) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# 🔑 Environment Variables
 
-## Deploy on Vercel
+Create `.env.local`:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```
+DATABASE_URL=postgresql://<your-neon-credentials>
+NEXT_PUBLIC_BASE_URL=http://localhost:3000
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying) for more details.
+On Vercel (Production):
+
+```
+DATABASE_URL=postgresql://<your-neon-credentials>
+NEXT_PUBLIC_BASE_URL=https://<your-vercel-domain>.vercel.app
+```
+
+---
+
+# 🧪 API Documentation
+
+### POST `/api/links`
+Create a short link  
+Body:
+```json
+{
+  "url": "https://google.com",
+  "code": "abc123"
+}
+```
+
+Responses:
+- `201 Created`
+- `409 Conflict` (duplicate code)
+- `400 Bad Request` (invalid URL or code)
+
+---
+
+### GET `/api/links`
+List all links.
+
+---
+
+### GET `/api/links/:code`
+Return stats for a specific code.
+
+---
+
+### DELETE `/api/links/:code`
+Deletes the link.
+
+---
+
+# ▶️ Running Locally
+
+```
+npm install
+npm run dev
+```
+
+Visit:
+```
+http://localhost:3000
+```
+
+---
+
+# 🚀 Deployment (Vercel)
+
+1. Push repo to GitHub  
+2. Import repo in Vercel  
+3. Add environment variables  
+4. Hit **Deploy**  
+5. Update `NEXT_PUBLIC_BASE_URL`  
+6. Redeploy  
+
+---
+
+# 🤖 AI Assistance
+
+Some parts of the UI, README, and debugging steps were assisted using ChatGPT as permitted by the assignment.  
+All logic and implementation details are fully understood and written by me.
+
+---
+
+# ✨ Author
+**K. Harshith**
