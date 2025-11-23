@@ -15,7 +15,9 @@ export default function Dashboard() {
     setLoading(false);
   }
 
-  useEffect(() => { loadLinks(); }, []);
+  useEffect(() => {
+    loadLinks();
+  }, []);
 
   async function createLink(e) {
     e.preventDefault();
@@ -23,8 +25,8 @@ export default function Dashboard() {
 
     const res = await fetch("/api/links", {
       method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({ url, code: code || undefined })
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url, code: code || undefined }),
     });
 
     if (res.status === 201) {
