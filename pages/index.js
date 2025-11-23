@@ -12,11 +12,15 @@ export default function Dashboard() {
   const [search, setSearch] = useState("");
 
   async function loadLinks() {
-    setLoading(true);
-    const res = await fetch("/api/links");
-    const data = await res.json();
-    setLinks(data);
-    setFilteredLinks(data);
+    try {
+      setLoading(true);
+      const res = await fetch("/api/links");
+      const data = await res.json();
+      setLinks(data);
+      setFilteredLinks(data);
+    } catch (e) {
+      console.error("Failed loading links", e);
+    }
     setLoading(false);
   }
 
@@ -24,13 +28,13 @@ export default function Dashboard() {
     loadLinks();
   }, []);
 
-  // filtering
+  // Search filter
   useEffect(() => {
     const s = search.toLowerCase();
     const filtered = links.filter(
       (l) =>
         l.code.toLowerCase().includes(s) ||
-        l.url.toLowerCase().includes(s)
+        l.target_url.toLowerCase().includes(s)
     );
     setFilteredLinks(filtered);
   }, [search, links]);
@@ -41,13 +45,19 @@ export default function Dashboard() {
     setSuccess("");
     setCreating(true);
 
+    // POST body must match API requirement
     const res = await fetch("/api/links", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url, code: code || undefined })
+      body: JSON.stringify({
+        target_url: url,
+        code: code || undefined,
+      }),
     });
 
     setCreating(false);
+
+    const body = await res.json();
 
     if (res.status === 201) {
       setUrl("");
@@ -55,8 +65,7 @@ export default function Dashboard() {
       setSuccess("Link created successfully!");
       loadLinks();
     } else {
-      const body = await res.json();
-      setError(body.message || "Error creating link");
+      setError(body.error || "Error creating link");
     }
   }
 
@@ -73,7 +82,7 @@ export default function Dashboard() {
     <div className="p-6 max-w-4xl mx-auto space-y-6">
       <h1 className="text-3xl font-bold">TinyLink Dashboard</h1>
 
-      {/* Search bar */}
+      {/* Search Bar */}
       <input
         className="border p-2 w-full rounded"
         placeholder="Search by code or URL..."
@@ -90,12 +99,14 @@ export default function Dashboard() {
             value={url}
             onChange={(e) => setUrl(e.target.value)}
           />
+
           <input
             className="border p-2 md:w-48 rounded"
             placeholder="Custom code (6–8 chars)"
             value={code}
             onChange={(e) => setCode(e.target.value)}
           />
+
           <button
             disabled={creating}
             className={`px-4 py-2 rounded text-white ${
@@ -127,6 +138,7 @@ export default function Dashboard() {
                 <th className="p-2">Actions</th>
               </tr>
             </thead>
+
             <tbody>
               {filteredLinks.map((l) => (
                 <tr key={l.code} className="border-t">
@@ -139,7 +151,7 @@ export default function Dashboard() {
                     </a>
                   </td>
 
-                  <td className="p-2 max-w-xs truncate">{l.url}</td>
+                  <td className="p-2 max-w-xs truncate">{l.target_url}</td>
 
                   <td className="p-2 text-center">{l.clicks}</td>
 
